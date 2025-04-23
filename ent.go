@@ -27,7 +27,7 @@ func (d *SlogDriver) Dialect() string {
 	return d.dri.Dialect()
 }
 
-// New gets a init and an optional logging function, and returns
+// New init a dialect.Driver and an optional logging function, and returns
 // a new slog-init that prints all outgoing operations.
 func New(dri dialect.Driver, options ...Option) dialect.Driver {
 	config := settings.ApplyDefault(defaultConfig, options)

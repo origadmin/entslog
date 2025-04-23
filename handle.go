@@ -57,7 +57,7 @@ func (h *Handler) LogError(ctx context.Context, msg string, err error) error {
 	return h.error(ctx, msg, err)
 }
 
-func errorLog(ctx context.Context, msg string, err error) error {
+func noopErrorLog(ctx context.Context, msg string, err error) error {
 	return err
 }
 
@@ -71,7 +71,7 @@ func makeHandle(o *Config) *Handler {
 		logger: o.logger,
 		filter: o.filter,
 		trace:  o.trace,
-		error:  errorLog,
+		error:  noopErrorLog,
 	}
 	h.log = func(ctx context.Context, msg string, attrs ...slog.Attr) {
 		attrs = h.Filter(ctx, attrs...)
