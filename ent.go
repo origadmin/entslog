@@ -27,8 +27,12 @@ func (d *SlogDriver) Dialect() string {
 	return d.dri.Dialect()
 }
 
-// New init a dialect.Driver and an optional logging function, and returns
-// a new slog-init that prints all outgoing operations.
+// New initializes a dialect. Driver and can pass in optional configuration options to return a new instance of SlogDriver,
+// The instance logs all database operations.
+//
+// The parametric DRI is the underlying database driver.
+// The options parameter is a series of optional configuration options for customizing logging behavior.
+// The return value is an implementation of the dialect. SlogDriver instance of the Driver interface.
 func New(dri dialect.Driver, options ...Option) dialect.Driver {
 	config := settings.ApplyDefault(defaultConfig, options)
 	handle := makeHandle(config)

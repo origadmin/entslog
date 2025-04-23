@@ -42,8 +42,17 @@ func emptyFilter(_ context.Context, attrs ...slog.Attr) []slog.Attr {
 	return attrs
 }
 
+type traceKey struct{}
+
+func TraceContext(ctx context.Context, trace string) context.Context {
+	return context.WithValue(ctx, traceKey{}, trace)
+}
+
 // traceUUID generates a unique identifier for a log entry using UUIDs.
 func traceUUID(ctx context.Context) string {
+	if trace, ok := ctx.Value(traceKey{}).(string); ok {
+		return trace
+	}
 	return uuid.Must(uuid.NewRandom()).String()
 }
 
