@@ -18,7 +18,7 @@ type Handler struct {
 	attrs  []slog.Attr
 }
 
-func (h *Handler) init(o *Option) *Handler {
+func (h *Handler) init(o *Config) *Handler {
 	h.log = func(ctx context.Context, msg string, attrs ...slog.Attr) {
 		attrs = h.Filter(ctx, attrs...)
 		h.logger.LogAttrs(ctx, o.level.Level(), msg, attrs...)
@@ -61,7 +61,7 @@ func errorLog(ctx context.Context, msg string, err error) error {
 	return err
 }
 
-func makeHandle(o *Option) *Handler {
+func makeHandle(o *Config) *Handler {
 	// Define a filter function to modify log attributes based on the FilterAttrs option.
 	if o.logger == nil {
 		o.logger = slog.Default()

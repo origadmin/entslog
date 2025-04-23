@@ -15,8 +15,8 @@ type (
 	TraceFunc func(context.Context) string
 	// FilterAttrs defines a function to filter out attributes from log entries.
 	FilterAttrs func(context.Context, ...slog.Attr) []slog.Attr
-	// Option defines configuration options for the logging handler.
-	Option struct {
+	// Config defines configuration options for the logging handler.
+	Config struct {
 		handleError bool         // HandleError determines whether errors encountered during logging are handled.
 		logger      *slog.Logger // Logger specifies the logger to be used for logging.
 		level       slog.Leveler // DefaultLevel specifies the default log level for messages.
@@ -24,12 +24,12 @@ type (
 		trace       TraceFunc    // GenerateID is a function to generate unique IDs for log entries.
 		filter      FilterAttrs  // Filters specifies the set of attributes to filter out from logged messages.
 	}
-	// Setting is a type alias for the settings.Setting type.
-	Setting = func(*Option)
+	// Option is a type alias for the settings.Setting type.
+	Option func(*Config)
 )
 
-// defaultOption provides the default configuration options for the logging handler.
-var defaultOption = Option{
+// defaultConfig provides the default configuration options for the logging handler.
+var defaultConfig = Config{
 	logger:      slog.Default(),  // Defaults to the default logger.
 	level:       slog.LevelInfo,  // Defaults to Info level.
 	errorLevel:  slog.LevelError, // Defaults to Error level.
@@ -51,10 +51,10 @@ func traceUUID(ctx context.Context) string {
 //
 // - `level`: The log level to be set as the default.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the default log level,
-// and returns the updated `*Option` pointer.
-func WithDefaultLevel(level slog.Leveler) Setting {
-	return func(o *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the default log level,
+// and returns the updated `*Config` pointer.
+func WithDefaultLevel(level slog.Leveler) Option {
+	return func(o *Config) {
 		o.level = level
 	}
 }
@@ -63,10 +63,10 @@ func WithDefaultLevel(level slog.Leveler) Setting {
 //
 // - `level`: The log level to be set for error logging.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the error log level
-// and enabling error handling, then returns the updated `*Option` pointer.
-func WithErrorLevel(level slog.Leveler) Setting {
-	return func(option *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the error log level
+// and enabling error handling, then returns the updated `*Config` pointer.
+func WithErrorLevel(level slog.Leveler) Option {
+	return func(option *Config) {
 		option.errorLevel = level
 		option.handleError = true
 	}
@@ -76,10 +76,10 @@ func WithErrorLevel(level slog.Leveler) Setting {
 //
 // - `handleError`: A boolean indicating whether to enable (true) or disable (false) error handling.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the error handling flag,
-// and returns the updated `*Option` pointer.
-func WithError() Setting {
-	return func(option *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the error handling flag,
+// and returns the updated `*Config` pointer.
+func WithError() Option {
+	return func(option *Config) {
 		option.handleError = true
 	}
 }
@@ -88,10 +88,10 @@ func WithError() Setting {
 //
 // - `attrs`: A variadic list of strings representing attribute names to be filtered.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the list of filtered attributes,
-// and returns the updated `*Option` pointer.
-func WithFilter(filter func(context.Context, ...slog.Attr) []slog.Attr) Setting {
-	return func(option *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the list of filtered attributes,
+// and returns the updated `*Config` pointer.
+func WithFilter(filter func(context.Context, ...slog.Attr) []slog.Attr) Option {
+	return func(option *Config) {
 		option.filter = filter
 	}
 }
@@ -101,10 +101,10 @@ func WithFilter(filter func(context.Context, ...slog.Attr) []slog.Attr) Setting 
 //
 // - `trace`: A function that accepts a `context.Context` and returns a string representing the generated ID.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the custom ID generation function,
-// and returns the updated `*Option` pointer.
-func WithTrace(trace func(context.Context) string) Setting {
-	return func(option *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the custom ID generation function,
+// and returns the updated `*Config` pointer.
+func WithTrace(trace func(context.Context) string) Option {
+	return func(option *Config) {
 		option.trace = trace
 	}
 }
@@ -114,10 +114,10 @@ func WithTrace(trace func(context.Context) string) Setting {
 //
 // - `logger`: The logger to be used for logging.
 //
-// Returns a function that accepts an `*Option` parameter, modifies it by setting the logger,
-// and returns the updated `*Option` pointer.
-func WithLogger(logger *slog.Logger) Setting {
-	return func(option *Option) {
+// Returns a function that accepts an `*Config` parameter, modifies it by setting the logger,
+// and returns the updated `*Config` pointer.
+func WithLogger(logger *slog.Logger) Option {
+	return func(option *Config) {
 		option.logger = logger
 	}
 }
