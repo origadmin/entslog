@@ -57,7 +57,13 @@ func (h *Handler) LogError(ctx context.Context, msg string, err error) error {
 	return h.error(ctx, msg, err)
 }
 
-func noopErrorLog(ctx context.Context, msg string, err error) error {
+func logError(h *Handler, o *Config, ctx context.Context, msg string, err error) error {
+	attrs := h.Filter(ctx, slog.Any("error", err))
+	h.logger.LogAttrs(ctx, o.errorLevel.Level(), msg, attrs...)
+	return err
+}
+
+func noopError(ctx context.Context, msg string, err error) error {
 	return err
 }
 
@@ -71,22 +77,9 @@ func makeHandle(o *Config) *Handler {
 		logger: o.logger,
 		filter: o.filter,
 		trace:  o.trace,
-		error:  noopErrorLog,
-	}
-	h.log = func(ctx context.Context, msg string, attrs ...slog.Attr) {
-		attrs = h.Filter(ctx, attrs...)
-		h.logger.LogAttrs(ctx, o.level.Level(), msg, attrs...)
-	}
-	if o.handleError {
-		h.error = func(ctx context.Context, msg string, err error) error {
-			if err != nil {
-				attrs := h.Filter(ctx, slog.Any("error", err))
-				h.logger.LogAttrs(ctx, o.errorLevel.Level(), msg, attrs...)
-			}
-			return err
-		}
+		error:  noopError,
 	}
 
 	// Return a configured logging handler.
-	return &h
+	return h.init(o)
 }

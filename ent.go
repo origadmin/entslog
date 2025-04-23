@@ -77,7 +77,7 @@ func (d *SlogDriver) QueryContext(ctx context.Context, query string, args ...any
 	return rows, d.LogError(ctx, "QueryContext", err)
 }
 
-// Tx adds an log-id for the transaction and calls the underlying init Tx command.
+// Tx adds a log-id for the transaction and calls the underlying init Tx command.
 func (d *SlogDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 	tx, err := d.dri.Tx(ctx)
 	if err != nil {
@@ -88,7 +88,7 @@ func (d *SlogDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 	return &SlogTx{tx: tx, Handler: d.Handler.with(slog.String("database", "tx")), id: id, ctx: ctx}, nil
 }
 
-// BeginTx adds an log-id for the transaction and calls the underlying init BeginTx command if it is supported.
+// BeginTx adds a log-id for the transaction and calls the underlying init BeginTx command if it is supported.
 func (d *SlogDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
 	drv, ok := d.dri.(interface {
 		BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
