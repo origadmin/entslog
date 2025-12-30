@@ -37,7 +37,7 @@ func (h *Handler) init(o *Config) *Handler {
 
 func (h *Handler) with(attrs ...slog.Attr) Handler {
 	handlerCopy := *h
-	handlerCopy.attrs = attrs
+	handlerCopy.attrs = append(h.attrs, attrs...)
 	return handlerCopy
 }
 
@@ -57,13 +57,7 @@ func (h *Handler) LogError(ctx context.Context, msg string, err error) error {
 	return h.error(ctx, msg, err)
 }
 
-func logError(h *Handler, o *Config, ctx context.Context, msg string, err error) error {
-	attrs := h.Filter(ctx, slog.Any("error", err))
-	h.logger.LogAttrs(ctx, o.errorLevel.Level(), msg, attrs...)
-	return err
-}
-
-func noopError(ctx context.Context, msg string, err error) error {
+func noopError(_ context.Context, _ string, err error) error {
 	return err
 }
 

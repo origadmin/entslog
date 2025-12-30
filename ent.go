@@ -10,13 +10,13 @@ import (
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"github.com/goexts/generic/settings"
+	"github.com/goexts/generic/configure"
 )
 
-// SlogDriver is a init that logs all init operations.
+// SlogDriver logs all driver operations.
 type SlogDriver struct {
 	Handler                // log function. defaults to slog.Default()
-	dri     dialect.Driver // underlying init.
+	dri     dialect.Driver // underlying driver.
 }
 
 func (d *SlogDriver) Close() error {
@@ -34,18 +34,18 @@ func (d *SlogDriver) Dialect() string {
 // The options parameter is a series of optional configuration options for customizing logging behavior.
 // The return value is an implementation of the dialect. SlogDriver instance of the Driver interface.
 func New(dri dialect.Driver, options ...Option) dialect.Driver {
-	config := settings.ApplyDefault(defaultConfig, options)
+	config := configure.Apply(defaultConfig(), options)
 	handle := makeHandle(config)
 	return &SlogDriver{dri: dri, Handler: handle.with(slog.String("database", "driver"))}
 }
 
-// Exec logs its params and calls the underlying init Exec method.
+// Exec logs its params and calls the underlying driver Exec method.
 func (d *SlogDriver) Exec(ctx context.Context, query string, args, v any) error {
 	d.Log(ctx, "Exec", slog.String("query", query), slog.Any("args", args))
 	return d.LogError(ctx, "Exec", d.dri.Exec(ctx, query, args, v))
 }
 
-// ExecContext logs its params and calls the underlying init ExecContext method if it is supported.
+// ExecContext logs its params and calls the underlying driver ExecContext method if it is supported.
 func (d *SlogDriver) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
 	drv, ok := d.dri.(interface {
 		ExecContext(context.Context, string, ...any) (sql.Result, error)
@@ -58,13 +58,13 @@ func (d *SlogDriver) ExecContext(ctx context.Context, query string, args ...any)
 	return result, d.LogError(ctx, "ExecContext", err)
 }
 
-// Query logs its params and calls the underlying init Query method.
+// Query logs its params and calls the underlying driver Query method.
 func (d *SlogDriver) Query(ctx context.Context, query string, args, v any) error {
 	d.Log(ctx, "Query", slog.String("query", query), slog.Any("args", args))
 	return d.LogError(ctx, "Query", d.dri.Query(ctx, query, args, v))
 }
 
-// QueryContext logs its params and calls the underlying init QueryContext method if it is supported.
+// QueryContext logs its params and calls the underlying driver QueryContext method if it is supported.
 func (d *SlogDriver) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
 	drv, ok := d.dri.(interface {
 		QueryContext(context.Context, string, ...any) (*sql.Rows, error)
@@ -77,7 +77,7 @@ func (d *SlogDriver) QueryContext(ctx context.Context, query string, args ...any
 	return rows, d.LogError(ctx, "QueryContext", err)
 }
 
-// Tx adds a log-id for the transaction and calls the underlying init Tx command.
+// Tx adds a log-id for the transaction and calls the underlying driver Tx command.
 func (d *SlogDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 	tx, err := d.dri.Tx(ctx)
 	if err != nil {
@@ -88,7 +88,7 @@ func (d *SlogDriver) Tx(ctx context.Context) (dialect.Tx, error) {
 	return &SlogTx{tx: tx, Handler: d.Handler.with(slog.String("database", "tx")), id: id, ctx: ctx}, nil
 }
 
-// BeginTx adds a log-id for the transaction and calls the underlying init BeginTx command if it is supported.
+// BeginTx adds a log-id for the transaction and calls the underlying driver BeginTx command if it is supported.
 func (d *SlogDriver) BeginTx(ctx context.Context, opts *sql.TxOptions) (dialect.Tx, error) {
 	drv, ok := d.dri.(interface {
 		BeginTx(context.Context, *sql.TxOptions) (dialect.Tx, error)
@@ -113,7 +113,7 @@ type SlogTx struct {
 	ctx context.Context // underlying transaction context.
 }
 
-// Exec logs its params and calls the underlying transaction Exec method.
+// Exec logs its params and calls the underlying driver Exec method.
 func (d *SlogTx) Exec(ctx context.Context, query string, args, v any) error {
 	d.Log(ctx, "Exec", slog.String("id", d.id), slog.String("query", query), slog.Any("args", args))
 	return d.LogError(ctx, "Exec", d.tx.Exec(ctx, query, args, v))
@@ -133,7 +133,7 @@ func (d *SlogTx) ExecContext(ctx context.Context, query string, args ...any) (sq
 	return result, d.LogError(ctx, "ExecContext", err)
 }
 
-// Query logs its params and calls the underlying transaction Query method.
+// Query logs its params and calls the underlying driver Query method.
 func (d *SlogTx) Query(ctx context.Context, query string, args, v any) error {
 	d.Log(ctx, "Query", slog.String("id", d.id), slog.String("query", query), slog.Any("args", args))
 	return d.LogError(ctx, "Query", d.tx.Query(ctx, query, args, v))
@@ -154,6 +154,7 @@ func (d *SlogTx) QueryContext(ctx context.Context, query string, args ...any) (*
 }
 
 // Commit logs this step and calls the underlying transaction Commit method.
+// Note: Uses the transaction's original context for consistent tracing.
 func (d *SlogTx) Commit() error {
 	d.Log(d.ctx, "Commit", slog.String("id", d.id))
 	return d.LogError(d.ctx, "Commit", d.tx.Commit())

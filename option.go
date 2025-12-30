@@ -28,14 +28,15 @@ type (
 	Option func(*Config)
 )
 
-// defaultConfig provides the default configuration configs for the logging handler.
-var defaultConfig = Config{
-	logger:      slog.Default(),  // Defaults to the default logger.
-	level:       slog.LevelInfo,  // Defaults to Info level.
-	errorLevel:  slog.LevelError, // Defaults to Error level.
-	handleError: true,            // Defaults to handling errors.
-	filter:      emptyFilter,     // Defaults to no filtering.
-	trace:       traceUUID,       // Uses the package-level trace function to generate log entry IDs by default.
+func defaultConfig() *Config {
+	return &Config{
+		logger:      slog.Default(),  // Defaults to the default logger.
+		level:       slog.LevelInfo,  // Defaults to Info level.
+		errorLevel:  slog.LevelError, // Defaults to Error level.
+		handleError: true,            // Defaults to handling errors.
+		filter:      emptyFilter,     // Defaults to no filtering.
+		trace:       traceUUID,       // Uses the package-level trace function to generate log entry IDs by default.
+	}
 }
 
 func emptyFilter(_ context.Context, attrs ...slog.Attr) []slog.Attr {
